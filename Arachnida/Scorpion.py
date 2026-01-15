@@ -55,6 +55,10 @@ tree.heading("Value", text="Value")
 tree.column("Field", width=250, anchor="w")
 tree.column("Value", width=520, anchor="w")
 
+# Track rows with None values
+none_items = []
+none_hidden = False
+
 # Scrollbar
 scrollbar = ttk.Scrollbar(screen, orient="vertical", command=tree.yview)
 tree.configure(yscrollcommand=scrollbar.set)
@@ -63,6 +67,30 @@ scrollbar.pack(side="right", fill="y")
 
 # Insert data into table
 for field, value in metadata_dict.items():
-    tree.insert("", "end", values=(field, value))
+    item = tree.insert("", "end", values=(field, value))
+    if value is None:
+        none_items.append(item)
+
+def toggle_none_rows():
+    global none_hidden
+
+    if not none_hidden:
+        for item in none_items:
+            tree.detach(item)
+        toggle_btn.config(text="Show None Fields")
+        none_hidden = True
+    else:
+        for item in none_items:
+            tree.reattach(item, "", "end")
+        toggle_btn.config(text="Hide None Fields")
+        none_hidden = False
+
+toggle_btn = ttk.Button(
+    screen,
+    text="Hide None Fields",
+    command=toggle_none_rows
+)
+toggle_btn.pack(side="bottom", pady=5)
+
 
 screen.mainloop()
