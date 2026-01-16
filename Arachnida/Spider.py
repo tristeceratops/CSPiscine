@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import requests
-import re
 import os
 import argparse
 from urllib.parse import urljoin, urlparse
+from bs4 import BeautifulSoup
 
 # ------------------ utils ------------------
 
@@ -34,7 +34,7 @@ parser.add_argument(
 
 parser.add_argument(
     "-p",
-    default="downloaded_files",
+    default="data",
     help="Downloaded images path"
 )
 
@@ -54,34 +54,19 @@ else:
 
 # ------------------ setup ------------------
 
-extensions = ['.png', '.jpg', '.jpeg', '.gif', 'bmp']
-
-image_pattern = re.compile(
-    r'(?:src|href)=(["\'])(.*?(?:' +
-    '|'.join(map(re.escape, extensions)) +
-    r'))\1',
-    re.IGNORECASE
-)
-
-link_pattern = re.compile(
-    r'(?:src|href)=(["\'])(.*?)\1',
-    re.IGNORECASE
-)
+extensions = ['.png', '.jpg', '.jpeg', '.gif', '.bmp']
 
 HEADERS = {
-    "User-Agent": "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     "Accept-Language": "fr,en;q=0.9",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/png,image/jpeg,image/gif,image/bmp",
-    "Referer": "https://www.example.com/search",
+    "Accept": "*/*",
     "Connection": "keep-alive"
 }
-
 
 save_dir = args.p
 os.makedirs(save_dir, exist_ok=True)
 
 # ------------------ recursive scraper ------------------
-
 def scrape_page(url, depth, visited):
     if depth == 0:
         return
@@ -100,13 +85,14 @@ def scrape_page(url, depth, visited):
         print(f"[!] Failed to fetch {url}: {e}")
         return
 
-    # ---- download images ----
-    images = image_pattern.findall(html)
+    soup = BeautifulSoup(html, 'html.parser')
+    images = soup.find_all('img')
 
-    for match in images:
-        img_url = urljoin(url, match[1])
+    for image in images:
+        img_url = image['src']
 
         try:
+            print(f"try with image url: {img_url}")
             img = requests.get(img_url, stream=True, timeout=5, headers=HEADERS)
             img.raise_for_status()
 
@@ -124,21 +110,22 @@ def scrape_page(url, depth, visited):
 
             print(f"    Saved: {filename}")
 
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"Failed to download image at url {img_url}, e: {e}")
 
     # ---- recursion ----
     if args.r:
-        links = link_pattern.findall(html)
+        links = soup.find_all('a')
 
         for link in links:
-            next_url = urljoin(url, link[1])
+            next_url = link['href']
             parsed = urlparse(next_url)
 
             if parsed.scheme not in ("http", "https"):
                 continue
 
             scrape_page(next_url, depth - 1, visited)
+
 
 # ------------------ run ------------------
 
