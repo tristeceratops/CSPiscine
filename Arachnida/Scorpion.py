@@ -28,6 +28,8 @@ info_dict = {
     "Frames in Image": getattr(image, "n_frames", 1)
 }
 
+infos = getattr(image, "info")
+
 metadata_dict.update(info_dict)
 metadata_dict.update({tag_name: None for tag_name in TAGS.values()})
 
@@ -36,6 +38,8 @@ exifdata = image.getexif()
 
 for tag_id, value in exifdata.items():
     tag_name = TAGS.get(tag_id, tag_id)
+    if (tag_name == "BrightnessValue"):
+        print(f"BrightnessValue={value}")
     if isinstance(value, bytes):
         try:
             value = value.decode()
