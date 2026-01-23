@@ -1,23 +1,24 @@
 FROM debian:bullseye
 
-RUN apt update
-RUN apt upgrade -y
+RUN apt update && apt upgrade -y && \
+    apt install -y tor nginx openssh-server curl man
 
-RUN apt install tor -y
-RUN apt install nginx -y
-RUN apt install systemctl -y
-RUN apt install man -y
-RUN apt install curl -y
+RUN mkdir -p /var/run/sshd
+RUN ssh-keygen -A
 
-RUN apt install openssh-server -y
+COPY index.html /var/www/html/index.html
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY torrc /etc/tor/torrc
+COPY sshd_config /etc/ssh/sshd_config
 
-RUN systemctl enable nginx
-#RUN systemctl start nginx
+RUN chown -R www-data:www-data /var/www/html
 
-RUN systemctl enable tor
-#RUN systemctl start tor
+#setup a password for root just to pass the ssh connection
+RUN echo "root:rootpassword" | chpasswd
 
-#COPY index.html /var/www/html/index.html
-#COPY nginx.conf /etc/nginx/nginx.conf
-#COPY torrc /etc/tor/torrc
-#COPY sshd_config /etc/ssh/sshd_config
+COPY start-services.sh /start-services.sh
+RUN chmod +x /start-services.sh
+
+EXPOSE 80 4242
+
+ENTRYPOINT ["/start-services.sh"]
