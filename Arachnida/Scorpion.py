@@ -44,11 +44,13 @@ def extract_all_exif(image):
 	metadata = {}
 
 	# ------------------ IFD0 (primary EXIF) ------------------
+	metadata["EXIF"] = "separator"
 	for tag_id, value in exifdata.items():
 		tag_name = TAGS.get(tag_id, tag_id)
 		metadata[tag_name] = decode_value(value)
 
 	# ------------------ Exif SubIFD ------------------
+	base_data = {}
 	base_data = extract_ifd(exifdata, 0x8769, BASE_TAGS)
 	for tag_name, value in base_data.items():
 		if tag_name == "ComponentsConfiguration":
@@ -62,10 +64,13 @@ def extract_all_exif(image):
 		elif tag_name == "SceneType":
 			if value == "\x01":
 				base_data[tag_name] = "Image was directly photographed"
+	base_data = {"BASE": "separator", **base_data}
 	metadata.update(base_data)
 
 	# ------------------ GPS IFD ------------------
+	gps_data = {}
 	gps_data = extract_ifd(exifdata, 0x8825, GPSTAGS)
+	metadata["GPS"] = "separator"
 	for tag_name, value in gps_data.items():
 		if tag_name == "GPSVersionID":
 			b = ''.join(format(ord(char), 'x') for char in value)
@@ -80,6 +85,7 @@ def extract_all_exif(image):
 		metadata[f"GPS_{tag_name}"] = value
 
 	# ------------------ Interop IFD ------------------
+	metadata["Interop"] = "separator"
 	metadata.update(
 		extract_ifd(exifdata, 0xA005, INTEROP_TAGS)
 	)
@@ -101,6 +107,7 @@ metadata_dict = {}
 
 # basic metadata
 info_dict = {
+	"Basic": "separator",
 	"Filename": image.filename,
 	"Image Size": image.size,
 	"Image Height": image.height,
@@ -127,21 +134,19 @@ tree.heading("Value", text="Value")
 tree.column("Field", width=250, anchor="w")
 tree.column("Value", width=520, anchor="w")
 
-# Track rows with None values
-none_items = []
-none_hidden = False
-
 # Scrollbar
 scrollbar = ttk.Scrollbar(screen, orient="vertical", command=tree.yview)
 tree.configure(yscrollcommand=scrollbar.set)
 tree.pack(side="left", fill="both", expand=True)
 scrollbar.pack(side="right", fill="y")
 
+tree.tag_configure("separator", background="#cccccc")  # light gray
 
 # Insert data into table
 for field, value in metadata_dict.items():
-	item = tree.insert("", "end", values=(field, value))
-	if value is None:
-		none_items.append(item)
+	if value == "separator":
+		item = tree.insert("", "end", values=(field,), tags=("separator"))
+	else:
+		item = tree.insert("", "end", values=(field, value))
 
 screen.mainloop()

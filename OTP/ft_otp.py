@@ -9,6 +9,8 @@ import time
 
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
+import qrcode
 # ------------------ setup ------------------
 keypath = "ft_otp.key"
 password = b"my-strong-password"
@@ -89,6 +91,9 @@ if args.k:
             (hmac_hash[offset + 3] & 0xff))
     otp = code % (10 ** 6) #6 digits
     print(f"password:{str(otp).zfill(6)}")
+    qr = qrcode.make(str(otp).zfill(6))
+    qr.save('secretQR.png')
+    qr.show()
 
 elif args.g:
     print(f"g = {args.g}")
