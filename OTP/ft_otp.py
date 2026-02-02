@@ -1,4 +1,3 @@
-import datetime
 import argparse
 import os.path
 import string
@@ -6,11 +5,10 @@ import hashlib
 import hmac
 import struct
 import time
-
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
 import qrcode
+
 # ------------------ setup ------------------
 keypath = "ft_otp.key"
 password = b"my-strong-password"

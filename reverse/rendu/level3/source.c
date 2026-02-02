@@ -2,6 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+void ____syscall_malloc(void)
+{
+	puts("Good job.");
+}
+
+void ___syscall_malloc(void)
+{
+	puts("Nope");
+	exit(1);
+}
+
 int main(void)
 {
     char input[64];
@@ -13,19 +24,16 @@ int main(void)
 
     if (scanf("%63s", input) != 1)
     {
-	    printf("Nope!\n");
-	    exit(1);
+	    ___syscall_malloc();
     }
 
     if (input[0] != '4')
     {
-	    printf("Nope!\n");
-	    exit(1);
+	    ___syscall_malloc();
     }
     if (input[1] != '2')
     {
-	    printf("Nope!\n");
-	    exit(1);
+	    ___syscall_malloc();
     }
 
     fflush(stdout);
@@ -52,9 +60,9 @@ int main(void)
     out[j] = '\0';
 
     if (strcmp(out, "********") == 0)
-        printf("Good job.\n");
+        ____syscall_malloc();
     else
-        printf("Nope.\n");
+        ___syscall_malloc();
 
     return 0;
 }
