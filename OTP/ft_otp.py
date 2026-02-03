@@ -74,13 +74,12 @@ if args.k:
 
     aesgcm = AESGCM(aes_key)
     decrypted = aesgcm.decrypt(nonce, ciphertext, None)
-    print("Decrypted text:", decrypted)
 
     counter = int(time.time() // 30)
 
     counter_bytes = struct.pack(">Q", counter)
 
-    hmac_hash = hmac.new(decrypted, counter_bytes, hashlib.sha256).digest()
+    hmac_hash = hmac.new(decrypted, counter_bytes, hashlib.sha1).digest()
 
     offset = hmac_hash[-1] & 0x0F
     code = ((hmac_hash[offset] & 0x7f) << 24 |
@@ -100,7 +99,7 @@ elif args.g:
         print(f"file at path:{path} does not exist")
         exit(1)
     with open(path) as f:
-        file_text = f.read()
+        file_text = f.read().strip()
     if file_text.startswith(("0x", "0X")):
         file_text = file_text[2:]
     if not (len(file_text) >= 64 and is_hexadecimal(file_text)):

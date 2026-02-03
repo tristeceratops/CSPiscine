@@ -27,7 +27,7 @@ def encryption(filepath, key):
     # Dériver la clé crypto
     derived_key = argon2id.kdf(
         SecretBox.KEY_SIZE,
-        key.encode(),
+        key,
         salt,
         opslimit=argon2id.OPSLIMIT_MODERATE,
         memlimit=argon2id.MEMLIMIT_MODERATE,

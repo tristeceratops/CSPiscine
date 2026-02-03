@@ -1,6 +1,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
+
+void wt(void)
+{
+    puts("");
+}
+
+void nice(int arg)
+{
+    puts("nice");
+}
+
+void try()
+{
+    puts("try");
+}
+
+void but()
+{
+    puts("but");
+}
+
+void this()
+{
+    puts("this");
+}
+
+void it()
+{
+    puts("it");
+}
+
+void not()
+{
+    puts("not.");
+}
+
+void that()
+{
+    puts("that.");
+}
+
+void easy()
+{
+    puts("easy.");
+}
 
 void ____syscall_malloc(void)
 {
