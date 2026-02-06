@@ -1,6 +1,7 @@
 import argparse
 import ipaddress
 import re
+import scapy.all import get_if_list
 
 def check_ipv4(ip:str) -> bool:
     try:
@@ -28,7 +29,8 @@ args = parser.parse_args()
 src = (getattr(args, "IP-src").strip(), getattr(args, "MAC-src").strip())
 target = (getattr(args, "IP-target").strip(), getattr(args, "MAC-target").strip())
 
+print(get_if_list())
+
 if not check_ipv4(src[0]) or not check_ipv4(target[0]) or not check_mac(src[1]) or not check_mac(target[1]):
     print("Wrong format for IP or MAC address")
     exit(1)
-
