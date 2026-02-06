@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  host1:
+    build: ./container1
+    container_name: host1
+    networks:
+      arpnet:
+        ipv4_address: 172.20.0.2
+    tty: true
+
+  host2:
+    build: ./container2
+    container_name: host2
+    networks:
+      arpnet:
+        ipv4_address: 172.20.0.3
+    tty: true
+
+networks:
+  arpnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
