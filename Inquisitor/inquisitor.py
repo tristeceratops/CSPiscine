@@ -1,7 +1,7 @@
 import argparse
 import ipaddress
 import re
-import scapy.all import get_if_list
+from scapy.all import get_if_list
 
 def check_ipv4(ip:str) -> bool:
     try:
