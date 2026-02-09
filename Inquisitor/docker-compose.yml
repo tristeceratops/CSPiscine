@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   host1:
     build: ./container1

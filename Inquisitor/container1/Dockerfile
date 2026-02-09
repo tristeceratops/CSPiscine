@@ -5,8 +5,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install tools
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip iproute2 iputils-ping arping net-tools && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y python3 python3-pip iproute2 iputils-ping arping net-tools
 
 # Copy Python ARP listener script (optional, you can mount)
 COPY inquisitor.py /root/inquisitor.py
