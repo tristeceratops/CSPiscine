@@ -22,7 +22,8 @@ def handle(pkt):
     if not pkt.haslayer(ARP):
         return
     arp = pkt[ARP]
-
+    print(arp.psrc + "/" + arp.hwsrc.lower())
+    print(arp.pdst + "/" + arp.hwdst.lower())
     if (
         arp.psrc == src[0] and
         arp.hwsrc.lower() == src[1] and

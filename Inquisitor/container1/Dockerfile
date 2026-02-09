@@ -7,6 +7,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get install -y python3 python3-pip iproute2 iputils-ping arping net-tools
 
+RUN pip install scapy
+
 # Copy Python ARP listener script (optional, you can mount)
 COPY inquisitor.py /root/inquisitor.py
 
