@@ -1,7 +1,7 @@
 import argparse
 import ipaddress
 import re
-from scapy.all import sniff, ARP
+from scapy.all import sniff, ARP, sr
 
 def check_ipv4(ip:str) -> bool:
     try:
@@ -22,15 +22,19 @@ def handle(pkt):
     if not pkt.haslayer(ARP):
         return
     arp = pkt[ARP]
-    print(arp.psrc + "/" + arp.hwsrc.lower())
-    print(arp.pdst + "/" + arp.hwdst.lower())
     if (
         arp.psrc == src[0] and
         arp.hwsrc.lower() == src[1] and
         arp.pdst == target[0] and
         arp.hwdst.lower() == target[1]
+        or
+        arp.psrc == target[0] and
+        arp.hwsrc.lower() == target[1] and
+        arp.pdst == src[0] and
+        arp.hwdst.lower() == src[1]
     ):
-        print(f"[ARP] {arp.psrc} ({arp.hwsrc}) → {arp.pdst} ({arp.hwdst})")
+        print(f"poison attack !!! src is {arp.psrc} and target is {arp.pdst}")
+
 #--------------------argparse--------------------
 parser = argparse.ArgumentParser(description="educative program about ARP poisoning")
 parser.add_argument("IP-src", help="ip v4 address of the source")
