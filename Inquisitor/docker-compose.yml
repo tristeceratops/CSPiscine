@@ -1,7 +1,7 @@
 services:
   host1:
     build: ./container1
-    container_name: host1
+    container_name: poisoner
     networks:
       arpnet:
         ipv4_address: 172.20.0.2
@@ -9,11 +9,19 @@ services:
 
   host2:
     build: ./container2
-    container_name: host2
+    container_name: source
     networks:
       arpnet:
         ipv4_address: 172.20.0.3
     tty: true
+
+  host3:
+      build: ./container3
+      container_name: target
+      networks:
+        arpnet:
+          ipv4_address: 172.20.0.4
+      tty: true
 
 networks:
   arpnet:
