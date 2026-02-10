@@ -1,7 +1,7 @@
 import argparse
 import ipaddress
 import re
-from scapy.all import sniff, ARP, sr, Ether, send, sendp
+from scapy.all import sniff, ARP, sr, Ether, send, sendp, conf
 
 def check_ipv4(ip:str) -> bool:
     try:
@@ -44,12 +44,15 @@ def handle(pkt):
         print(f"poison attack !!! src is {arp.psrc} and target is {arp.pdst}")
         pkt = Ether(dst=arp.hwsrc) / ARP(
             op=2,
+            hwsrc=None, #scapy autofill
             psrc=arp.pdst,
             pdst=arp.psrc,
             hwdst=arp.hwsrc
         )
         pkt.show()
-        sendp(pkt)
+        print("------------------------")
+        pkt.show2()
+        sendp(pkt, iface=conf.iface, verbose=False)
 
 #--------------------argparse--------------------
 parser = argparse.ArgumentParser(description="educative program about ARP poisoning")
