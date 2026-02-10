@@ -28,3 +28,7 @@ check:
 	@docker images -a
 	@echo ""
 	@docker network ls
+
+re: fclean build
+
+.PHONY: all build stop start restart clean fclean check re

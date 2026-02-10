@@ -18,21 +18,27 @@ def check_mac(mac: str) -> bool:
     ]
     return any(re.fullmatch(p, mac) for p in patterns)
 
+def check_arp(arp, src, target):
+    if arp.op == 1: #who-has
+        if arp.psrc == src[0] and arp.hwsrc.lower() == src[1]:
+            return True
+        if arp.pdst == target[0] and arp.hwdst.lower() == target[1]:
+            return True
+    elif arp.op == 2: #is-at
+        if arp.psrc == src[0] and arp.hwsrc.lower() == src[1]:
+            return True
+        if arp.pdst == target[0] and arp.hwdst.lower() == target[1]:
+            return True
+    else: #other instruction, not need now
+        return False
+
 def handle(pkt):
     if not pkt.haslayer(ARP):
         return
     arp = pkt[ARP]
-    if (
-        arp.psrc == src[0] and
-        arp.hwsrc.lower() == src[1] and
-        arp.pdst == target[0] and
-        arp.hwdst.lower() == target[1]
-        or
-        arp.psrc == target[0] and
-        arp.hwsrc.lower() == target[1] and
-        arp.pdst == src[0] and
-        arp.hwdst.lower() == src[1]
-    ):
+    print(f"src={src}, target={target}")
+    print(f"arp={arp} with op is:{arp.op}///psrc is:{arp.psrc}///hwsrc is:{arp.hwsrc.lower()}///pdst is:{arp.pdst}///hwdst is:{arp.hwdst.lower()}")
+    if check_arp(arp, src, target):
         print(f"poison attack !!! src is {arp.psrc} and target is {arp.pdst}")
 
 #--------------------argparse--------------------
