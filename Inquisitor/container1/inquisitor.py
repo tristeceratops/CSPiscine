@@ -19,18 +19,19 @@ def check_mac(mac: str) -> bool:
     return any(re.fullmatch(p, mac) for p in patterns)
 
 def check_arp(arp, src, target):
-    if arp.op == 1: #who-has
-        if arp.psrc == src[0] and arp.hwsrc.lower() == src[1]:
-            return True
-        if arp.pdst == target[0] and arp.hwdst.lower() == target[1]:
-            return True
-    elif arp.op == 2: #is-at
-        if arp.psrc == src[0] and arp.hwsrc.lower() == src[1]:
-            return True
-        if arp.pdst == target[0] and arp.hwdst.lower() == target[1]:
-            return True
-    else: #other instruction, not need now
+    src_ip, src_mac = src
+    target_ip, target_mac = target
+
+    if arp.op != 1:
         return False
+
+    if arp.psrc == src_ip and arp.pdst == target_ip:
+        return True
+
+    if arp.psrc == target_ip and arp.pdst == src_ip:
+        return True
+
+    return False
 
 def handle(pkt):
     if not pkt.haslayer(ARP):
