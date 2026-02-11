@@ -89,6 +89,6 @@ if not check_ipv4(src[0]) or not check_ipv4(target[0]) or not check_mac(src[1]) 
     print("Wrong format for IP or MAC address")
     exit(1)
 
+is_running = True
 sniff(filter="arp", prn=handle, store=False)
 
-is_running = True
