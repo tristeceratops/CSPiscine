@@ -35,6 +35,22 @@ def check_arp(arp, src, target):
 
     return False
 
+def restore(src, target):
+    send(ARP(
+        op=2,
+        psrc=src[0],
+        hwsrc=src[1],
+        pdst=target[0],
+        hwdst="ff:ff:ff:ff:ff:ff"),
+    count=5)
+    send(ARP(
+        op=2,
+        psrc=target[0],
+        hwsrc=target[1],
+        pdst=src[0],
+        hwdst="ff:ff:ff:ff:ff:ff"),
+    count=5)
+
 def handle(pkt):
     if not pkt.haslayer(ARP):
         return
@@ -57,7 +73,7 @@ def handle(pkt):
         else:
             mac_send = src[1]
 
-        pkt2 = Ether(dst=arp.hwsrc) / ARP(
+        pkt2 = Ether(dst=mac_send) / ARP(
             op=2,
             hwsrc=None,  # scapy autofill
             psrc=arp.psrc,
@@ -70,7 +86,8 @@ def handle(pkt):
                 sendp(pkt, count=5, verbose=False)
                 sendp(pkt2, count=5, verbose=False)
             except KeyboardInterrupt:
-                pass #restore
+                restore(src, target)
+                exit(1)
             else:
                 time.sleep(2)
 
