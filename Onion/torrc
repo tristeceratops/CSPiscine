@@ -1,5 +1,9 @@
 SocksPort 9050 # Default: Bind to localhost:9050 for local connections.
 SocksPolicy accept 192.168.0.0/16
 RunAsDaemon 1
+
 HiddenServiceDir /var/lib/tor/hidden_service/
 HiddenServicePort 80 127.0.0.1:80
+
+HiddenServiceDir /var/lib/tor/ssh_service/
+HiddenServicePort 4242 127.0.0.1:4242

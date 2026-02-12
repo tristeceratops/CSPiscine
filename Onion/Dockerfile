@@ -19,6 +19,7 @@ RUN echo "root:rootpassword" | chpasswd
 COPY start-services.sh /start-services.sh
 RUN chmod +x /start-services.sh
 
-EXPOSE 80 4242
+EXPOSE 80 8080
+EXPOSE 4242 4243
 
 ENTRYPOINT ["/start-services.sh"]
