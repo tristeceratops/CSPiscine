@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import requests
 import os
+import errno
 import argparse
 from urllib.parse import urljoin, urlparse, urlencode
 from bs4 import BeautifulSoup
@@ -68,6 +69,9 @@ def handle_image(img_url):
 
     except Exception as e:
         print(f"Failed: {img_url} → {e}")
+        if e.errno == errno.ENOSPC:
+            print("Not enough space on device, stop crawling")
+            exit(1)
 
 def clean_url(raw_url):
     raw_url = raw_url.strip()
@@ -133,7 +137,11 @@ HEADERS = {
 }
 
 save_dir = args.p
-os.makedirs(save_dir, exist_ok=True)
+try:
+    os.makedirs(save_dir, exist_ok=True)
+except Exception as e:
+    print(f"Errors during directory creation at {save_dir}: {e}")
+    exit(1)
 
 # ------------------ BFS scraper ------------------
 def bfs_scrape(start_url, max_depth):

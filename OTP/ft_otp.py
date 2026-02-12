@@ -14,11 +14,18 @@ keypath = "ft_otp.key"
 password = b"my-strong-password"
 # ------------------ argparse ------------------
 
+def password_input(message="What is your secret?: "):
+    return input(message)
+
 def non_empty_string(value: str) -> str:
     if not value:
         raise argparse.ArgumentTypeError("Value cannot be empty")
     return value
 
+def QR_generator(text):
+    qr = qrcode.make(text)
+    qr.save('secretQR.png')
+    qr.show()
 
 parser = argparse.ArgumentParser(description="HOTP 6-digits password generator")
 
@@ -36,7 +43,7 @@ group.add_argument(
 group.add_argument(
     "-k", "--key",
     dest="k",
-    help="Generate a new temporary password",
+    help="Generate a new temporary password, need a .key file generate by -g option at the root of the folder",
     action="store_true"
 )
 
@@ -57,7 +64,6 @@ else if not k and g, use g path to create a ft_otp.key
 """
 
 if args.k:
-    print(f"k = {args.k}")
 
     if not os.path.exists(keypath):
         print("key does not exist, use -h for help")
@@ -65,15 +71,21 @@ if args.k:
 
     with open(keypath, "rb") as f:
         data = f.read()
+    
+    password = password_input().encode("utf-8")
+    
     salt = data[:16]
     nonce = data[16:28]
     ciphertext = data[28:]
 
     kdf = Scrypt(salt=salt, length=32, n=2**14, r=8, p=1)
-    aes_key = kdf.derive(password)
-
-    aesgcm = AESGCM(aes_key)
-    decrypted = aesgcm.decrypt(nonce, ciphertext, None)
+    try:
+        aes_key = kdf.derive(password)
+        aesgcm = AESGCM(aes_key)
+        decrypted = aesgcm.decrypt(nonce, ciphertext, None)
+    except Exception as e:
+        print(f"Error from descryption: {e}\n WRONG PASSWORD!")
+        exit(1)
 
     counter = int(time.time() // 30)
 
@@ -87,10 +99,10 @@ if args.k:
             (hmac_hash[offset + 2] & 0xff) << 8 |
             (hmac_hash[offset + 3] & 0xff))
     otp = code % (10 ** 6) #6 digits
-    print(f"password:{str(otp).zfill(6)}")
-    qr = qrcode.make(str(otp).zfill(6))
-    qr.save('secretQR.png')
-    qr.show()
+    code = str(otp).zfill(6)
+    print(f"password:{code}")
+    QR_generator(code)
+
 
 elif args.g:
     print(f"g = {args.g}")
@@ -105,6 +117,7 @@ elif args.g:
     if not (len(file_text) >= 64 and is_hexadecimal(file_text)):
         print("Key must be hexadecimal and at least 64 characters long")
         exit(1)
+    password = password_input().encode("utf-8")
     salt = os.urandom(16)
     # salt is random values used to modify the output, length is the required length for the output
     # n is CPU/Memory cost parameter. It must be larger than 1 and be a power of 2.
