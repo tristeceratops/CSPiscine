@@ -1,0 +1,16 @@
+you have an error in your sql syntax
+warning: mysql
+mysql_fetch
+mysqli_fetch
+mysql_num_rows
+mysql_query
+mysql_result
+supplied argument is not a valid mysql
+unknown column
+mysql server version for the right syntax
+check the manual that corresponds to your mysql server version
+column count doesn't match value count
+operand should contain
+subquery returns more than 1 row
+duplicate entry
+incorrect integer value
