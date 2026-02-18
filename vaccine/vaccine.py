@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 from pprint import pprint
+from ressource.generate.error_patterns import ERROR_PATTERNS
 
 def get_all_forms(url):
     soup = bs(s.get(url).content, "html.parser")

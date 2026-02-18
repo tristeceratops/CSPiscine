@@ -1,0 +1,4 @@
+find a correct way to store the multiple values in file (stay at stric values, I do not want them inside my py files) and then to generate py values with them
+
+need to rethink the folder structure, maybe with variables
+also rethink again on how to use makefile, maybe adding more variable to makefiles or to use makefile to send variables to py generator of ressource
