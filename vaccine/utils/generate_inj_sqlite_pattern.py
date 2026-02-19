@@ -2,9 +2,8 @@ from pathlib import Path
 import sys
 
 # Paths to your input error text files
-MYSQL_FILE = "ressource/Mysql/errors_message.txt"
-SQLITE_FILE = "ressource/SQLite/errors_message.txt"
-OUTPUT_FILE = "ressource/generate/error_patterns.py"
+ERROR_INJ_FILE = "ressource/SQLite/error_base.txt"
+OUTPUT_FILE = "ressource/generate/sqlite_patterns.py"
 
 
 def load_errors(file_path):
@@ -30,34 +29,25 @@ def load_errors(file_path):
         sys.exit(1)
 
 
-def generate_error_patterns(mysql_file, sqlite_file, output_file):
-    """Generate a Python file defining error patterns for MySQL and SQLite."""
+def generate_error_patterns(mysql_file, output_file):
     mysql_errors = load_errors(mysql_file)
-    sqlite_errors = load_errors(sqlite_file)
 
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
     try:
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write("# Auto-generated file: error patterns for SQL detection\n\n")
+            f.write("# Auto-generated file: error injection for MySQL detection\n\n")
 
             # Write MySQL errors
-            f.write("MYSQL_ERRORS = {\n")
-            for err in sorted(mysql_errors):
-                f.write('    ' + repr(err) + ',\n')
-            f.write("}\n\n")
-
-            # Write SQLite errors
-            f.write("SQLITE_ERRORS = {\n")
-            for err in sorted(sqlite_errors):
+            f.write("ERRORS_INJ = {\n")
+            for err in mysql_errors:
                 f.write('    ' + repr(err) + ',\n')
             f.write("}\n\n")
 
             # Combine into a single dict
-            f.write("ERROR_PATTERNS = {\n")
-            f.write("    'mysql': MYSQL_ERRORS,\n")
-            f.write("    'sqlite': SQLITE_ERRORS,\n")
+            f.write("SQLITE_ERROR = {\n")
+            f.write("    'errors': ERRORS_INJ,\n")
             f.write("}\n")
 
         print(f"[+] Successfully generated '{output_file}'.")
@@ -67,5 +57,5 @@ def generate_error_patterns(mysql_file, sqlite_file, output_file):
 
 
 if __name__ == "__main__":
-    generate_error_patterns(MYSQL_FILE, SQLITE_FILE, OUTPUT_FILE)
+    generate_error_patterns(ERROR_INJ_FILE, OUTPUT_FILE)
 

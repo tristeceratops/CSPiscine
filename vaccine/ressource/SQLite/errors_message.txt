@@ -2,7 +2,7 @@ sqlite error
 sqlite3.operationalerror
 sqlite3.databaseerror
 sqlite3.integrityerror
-near \"
+near "
 syntax error
 unrecognized token
 no such table
