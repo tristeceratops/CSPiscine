@@ -1,5 +1,5 @@
 import requests
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, parse_qsl
 from pprint import pprint
 import argparse
 try:
@@ -18,25 +18,43 @@ def is_vulnerable_errors(response):
             if error in response.content.decode().lower():
                 if not answer:
                     answer = True
+                    break
         return answer
 
-def test_sqli_errors(url):
+def get_insertion_position(query_string, target_key):
+    start = query_string.find(target_key + "=")
+    if start == -1:
+        return None
+
+    value_start = start + len(target_key) + 1
+    value_end = query_string.find("&", value_start)
+
+    if value_end == -1:  # last parameter
+        return len(query_string)
+
+    return value_end
+
+def test_sqli_errors(url, params):
     found = False
 
     #MySQL
     sqli_list = MYSQL_ERROR["errors"]
-    for injection in sqli_list:
-        new_url = f"{url}{injection}"
-        print("[!] Trying", new_url)
+    for parameter, value in params:
+        for injection in sqli_list:
+            pos = get_insertion_position(url, parameter)
+            if pos == None:
+                continue
+            new_url = url[:pos] + injection + url[pos:]
+            print("[!] Trying", new_url)
 
-        try:
-            res = s.get(new_url)
-        except Exception as e:
-            print(f"[!] Failed to get {new_url}: {e}")
-            exit(1)
-        if is_vulnerable_errors(res):
-            print("[+] SQL Injection vulnerability detected, link:", new_url)
-            found = True
+            try:
+                res = s.get(new_url)
+            except Exception as e:
+                print(f"[!] Failed to get {new_url}: {e}")
+                exit(1)
+            if is_vulnerable_errors(res):
+                print("[+] SQL Injection vulnerability detected, link:", new_url)
+                found = True
     
     if found:
         print("INJECTION ERROR BASE FOUND FOR MYSQL")
@@ -61,8 +79,14 @@ def test_sqli_errors(url):
         return
     return
 
+def parse_sql(url):
+    parsed = urlparse(url)
+    params = parse_qsl(parsed.query, keep_blank_values=True)
+    return params
+
 def scan_sql_injection(url):
-    test_sqli_errors(url)
+    params = parse_sql(url)
+    test_sqli_errors(url, params)
 
 def parse_arg():
     parser = argparse.ArgumentParser(description="SQLI Scanner")
@@ -79,11 +103,19 @@ def parse_arg():
         default="GET")
     return parser.parse_args()
 
-s = requests.Session()
-s.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
-
+def create_session(url):
+    s = requests.Session()
+    s.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
+    try:
+        response = s.get(url) #init cookies
+    except Exception as e:
+        print(f"[!] Failed to get {url}: {e}")
+        exit(1)
+    #print(s.cookies.get_dict())
+    return s
 
 if __name__ == "__main__":
     url = "http://testphp.vulnweb.com/search.php?test=query"
     args = parse_arg()
+    s = create_session(url)
     scan_sql_injection(url)
