@@ -128,7 +128,7 @@ def find_nb_sql_args(url, params, patterns, max_test=20):
                     if found > max_found:
                         max_found = found
                         max_param = parameter
-                        max_pattern = injection
+                        max_pattern = payload
                     break
 
     return max_found, max_param, max_pattern
